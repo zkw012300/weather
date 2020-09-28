@@ -2,11 +2,9 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
-import 'package:geocoder/geocoder.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:weather/base/weather_individual_object.dart';
 import 'package:weather/utils/image_utils.dart';
-import 'package:weather/utils/log_utils.dart';
 import 'package:weather/utils/screen_utils.dart';
 
 class SnowWeather extends StatefulWidget {
@@ -65,19 +63,6 @@ class _SnowWeatherState extends State<SnowWeather>
     super.initState();
     _initAssets();
     _initController();
-    // _test();
-  }
-
-  void _test() async {
-    final permission = await requestPermission();
-    LogUtils.log("Location", "permission = $permission");
-    if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
-      Position position = await getCurrentPosition();
-      LogUtils.log("Location", "position = $position");
-      final coordinates = new Coordinates(position.latitude, position.longitude);
-      final addresses = await Geocoder.local.findAddressesFromCoordinates(coordinates);
-      LogUtils.log("Location", "addresses ${addresses.first.subLocality}");
-    }
   }
 
   @override
@@ -148,7 +133,7 @@ class SnowFlake extends WeatherIndividualObject {
   static SnowFlake generate(ui.Image snowFlakeImage) {
     SnowFlake snowFlake = SnowFlake();
     snowFlake.snowFlakeImage = snowFlakeImage;
-    snowFlake._init();
+    snowFlake._init(isDelay: true);
     return snowFlake;
   }
 
@@ -172,7 +157,10 @@ class SnowFlake extends WeatherIndividualObject {
   /// 雪花颗粒的缩放
   double scale;
 
-  void _init() {
+  /// 延迟下落的时间
+  int delay;
+
+  void _init({bool isDelay = false}) {
     final random = Random();
     final scaleThreshold = 0.4;
     final alphaThreshold = 0.3;
@@ -188,13 +176,31 @@ class SnowFlake extends WeatherIndividualObject {
     kazeSpeed = (random.nextDouble() * 0.5) * kazeDirection;
     scale = random.nextDouble() * (1 - scaleThreshold) + scaleThreshold;
     alpha = random.nextDouble() * (1 - alphaThreshold) + alphaThreshold;
+    if (isDelay) {
+      delay = random.nextInt(200) + 100;
+    }
   }
 
   @override
   void draw(Canvas canvas, Paint paint) {
+    if (delay != 0) {
+      delay--;
+      return;
+    }
     if (y >= ScreenUtils.height || x >= ScreenUtils.width || x <= 0) {
       _init();
     }
+
+    /// 色彩矩阵
+    /// [a b c d e         [ R
+    ///  f g h i j    x      G
+    ///  k l m n o           B
+    ///  p q r s t]          A ]
+    ///
+    /// R = a * R + b * G + c * B + d * A + e
+    /// G = f * R + g * G + h * B + i * A + j
+    /// B = k * R + l * G + m * B + n * A + o
+    /// A = p * R + q * G + r * B + s * A + t
     final _identity = ColorFilter.matrix(<double>[
       1,
       0,

@@ -1,7 +1,4 @@
 
-class LogUtils {
-
-  static void log(String tag, String msg) {
-    print("[$tag]$msg");
-  }
+void printLog(String tag, String msg) {
+  print("[$tag]$msg");
 }
