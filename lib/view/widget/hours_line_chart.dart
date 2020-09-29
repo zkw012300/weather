@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:weather/model/hours_data.dart';
+import 'package:weather/model/text_with_point.dart';
 import 'package:weather/utils/log_utils.dart';
 import 'package:weather/utils/mock_utils.dart';
 import 'package:weather/utils/screen_utils.dart';
@@ -26,12 +28,18 @@ class _HourLineChartState extends State<HoursLineChart> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(24),
-      child: BlurRectWidget(
-        child: _scrollablePainter(),
-      ),
-    );
+    Widget widget;
+    if (_data.isEmpty) {
+      widget = Container(width: 0, height: 0,);
+    } else {
+      widget = Container(
+        padding: EdgeInsets.all(24),
+        child: BlurRectWidget(
+          child: _scrollablePainter(),
+        ),
+      );
+    }
+    return widget;
   }
 
   Widget _scrollablePainter() {
@@ -89,12 +97,7 @@ class _HoursLineChartPainter extends CustomPainter {
   }
 
   @override
-  void paint(Canvas canvas, Size size) {
-    if (_data.isEmpty) {
-      return;
-    }
-
-    _lineChartPath.reset();
+  void paint(Canvas canvas, Size size) {_lineChartPath.reset();
     for (int i = 0; i < _data.length; i++) {
       final index = i;
       Offset linePoint = _linePoints[index];
@@ -105,12 +108,12 @@ class _HoursLineChartPainter extends CustomPainter {
       }
       canvas.drawCircle(linePoint, ScreenUtils.setWidth(10), _pointPaint);
       canvas.drawParagraph(
-        _timePoints[index]._text,
-        _timePoints[index]._point,
+        _timePoints[index].text,
+        _timePoints[index].point,
       );
       canvas.drawParagraph(
-        _temperatePoints[index]._text,
-        _temperatePoints[index]._point,
+        _temperatePoints[index].text,
+        _temperatePoints[index].point,
       );
     }
     canvas.drawPath(_lineChartPath, _lineChartPaint);
@@ -221,45 +224,5 @@ class _HoursLineChartPainter extends CustomPainter {
     ));
     pb.addText(text);
     return pb.build()..layout(ui.ParagraphConstraints(width: itemWidth));
-  }
-}
-
-class TextWithPoint {
-  final ui.Paragraph _text;
-  final Offset _point;
-
-  TextWithPoint(this._text, this._point);
-
-  @override
-  String toString() {
-    return 'TextWithPoint{_text: $_text, _point: $_point}';
-  }
-}
-
-class HourData {
-  static const WEATHER_1 = "1";
-  static const WEATHER_2 = "2";
-  static const WEATHER_3 = "3";
-  static const WEATHER_4 = "4";
-
-  HourData(int hour, this.temperate, this.weather) {
-    this.time = _time(hour);
-  }
-
-  String time;
-  int temperate;
-  String weather;
-
-  String _time(int hour) {
-    if (hour < 10) {
-      return "0$hour:00";
-    } else {
-      return "$hour:00";
-    }
-  }
-
-  @override
-  String toString() {
-    return 'MockHourData{time: $time, temperate: $temperate, weather: $weather}';
   }
 }

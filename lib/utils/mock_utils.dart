@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:weather/model/hours_data.dart';
 import 'package:weather/view/widget/hours_line_chart.dart';
 
 List<HourData> mockHoursData({int size = 24}) {
