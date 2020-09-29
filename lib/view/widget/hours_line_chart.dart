@@ -1,11 +1,12 @@
-import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:weather/utils/log_utils.dart';
 import 'package:weather/utils/mock_utils.dart';
 import 'package:weather/utils/screen_utils.dart';
 import 'package:weather/view/widget/blur_rect.dart';
+
+const _TAG = "HoursLineChart";
 
 class HoursLineChart extends StatefulWidget {
   @override
@@ -15,7 +16,7 @@ class HoursLineChart extends StatefulWidget {
 }
 
 class _HourLineChartState extends State<HoursLineChart> {
-  List<MockHourData> _data;
+  List<HourData> _data = List();
 
   @override
   void initState() {
@@ -34,18 +35,23 @@ class _HourLineChartState extends State<HoursLineChart> {
   }
 
   Widget _scrollablePainter() {
-    final width = 200.0;
+    final width = 200.0 * _data.length;
     final height = 480.0;
+    final Size size = Size(
+      ScreenUtils.setWidth(width),
+      ScreenUtils.setHeight(height),
+    );
+    final _painter = _HoursLineChartPainter(
+      _data != null ? _data : List(),
+      size,
+    );
     return SingleChildScrollView(
       child: Container(
-        width: ScreenUtils.setWidth(width) * 24,
-        height: ScreenUtils.setHeight(height),
+        width: size.width,
+        height: size.height,
         child: CustomPaint(
-          painter: _HoursLineChartPainter(_data != null ? _data : List()),
-          size: Size(
-            ScreenUtils.setWidth(width) * 24,
-            ScreenUtils.setHeight(height),
-          ),
+          painter: _painter,
+          size: size,
         ),
       ),
       scrollDirection: Axis.horizontal,
@@ -53,43 +59,45 @@ class _HourLineChartState extends State<HoursLineChart> {
   }
 
   void _getData() async {
-    _data = mockHoursData();
+    _data = mockHoursData(size: 47);
     setState(() {});
   }
 }
 
 class _HoursLineChartPainter extends CustomPainter {
-  final List<MockHourData> _data;
+  final List<HourData> _data;
 
   bool hasInit = false;
-  double _temperateGap = -1;
-  double _timeGap = -1;
-  int maxTemperate = -100000;
-  int minTemperate = 100000;
+  double _temperateGap;
+  double _timeGap;
+  int maxTemperate;
+  int minTemperate;
 
-  double startEndPadding = ScreenUtils.setWidth(50);
+  double startEndPadding = ScreenUtils.setWidth(80);
   double topBottomPadding = ScreenUtils.setHeight(100);
 
   Path _lineChartPath;
   Paint _lineChartPaint;
   Paint _pointPaint;
 
-  List<Offset> linePoints;
-  List<Offset> timePoints;
+  List<Offset> _linePoints;
+  List<TextWithPoint> _timePoints;
+  List<TextWithPoint> _temperatePoints;
 
-  _HoursLineChartPainter(this._data);
+  _HoursLineChartPainter(this._data, Size size) {
+    _init(size);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (_data.isEmpty) {
       return;
     }
-    _init(size);
+
     _lineChartPath.reset();
     for (int i = 0; i < _data.length; i++) {
-      final element = _data[i];
       final index = i;
-      Offset linePoint = linePoints[index];
+      Offset linePoint = _linePoints[index];
       if (index == 0) {
         _lineChartPath.moveTo(linePoint.dx, linePoint.dy);
       } else {
@@ -97,8 +105,12 @@ class _HoursLineChartPainter extends CustomPainter {
       }
       canvas.drawCircle(linePoint, ScreenUtils.setWidth(10), _pointPaint);
       canvas.drawParagraph(
-        _buildText(element.time, _timeGap),
-        timePoints[index],
+        _timePoints[index]._text,
+        _timePoints[index]._point,
+      );
+      canvas.drawParagraph(
+        _temperatePoints[index]._text,
+        _temperatePoints[index]._point,
       );
     }
     canvas.drawPath(_lineChartPath, _lineChartPaint);
@@ -114,7 +126,31 @@ class _HoursLineChartPainter extends CustomPainter {
       return;
     }
     _initGap(size);
+    _initDraw();
+    _initOffsets(size);
+    hasInit = true;
+  }
 
+  void _initGap(Size size) {
+    maxTemperate = minTemperate = _data[0].temperate;
+    _data.forEach((element) {
+      if (element.temperate > maxTemperate) {
+        maxTemperate = element.temperate;
+      }
+      if (element.temperate < minTemperate) {
+        minTemperate = element.temperate;
+      }
+    });
+    final delta = maxTemperate - minTemperate;
+    printLog(
+      _TAG,
+      "maxTemperate = $maxTemperate, minTemperate = $minTemperate",
+    );
+    _temperateGap = (size.height - topBottomPadding * 2) / delta;
+    _timeGap = (size.width - startEndPadding * 2) / (_data.length - 1);
+  }
+
+  void _initDraw() {
     _lineChartPaint = Paint();
     _lineChartPaint.color = Colors.white;
     _lineChartPaint.isAntiAlias = true;
@@ -125,66 +161,88 @@ class _HoursLineChartPainter extends CustomPainter {
 
     _pointPaint = Paint();
     _pointPaint.style = PaintingStyle.fill;
-    _pointPaint.color = Color(0x80FFFFFF);
+    _pointPaint.color = Color(0xA0FFFFFF);
 
     _lineChartPath = Path();
-
-    _initLinePoints(size);
-
-    hasInit = true;
   }
 
-  void _initGap(Size size) {
-    _data.forEach((element) {
-      if (element.temperate > maxTemperate) {
-        maxTemperate = element.temperate;
-      }
-      if (element.temperate < minTemperate) {
-        minTemperate = element.temperate;
-      }
-    });
-    final delta = maxTemperate - minTemperate;
-    _temperateGap = (size.height - topBottomPadding * 2) / delta;
-    _timeGap = (size.width - startEndPadding * 2) / 24;
-  }
+  void _initOffsets(Size size) {
+    _linePoints = List();
+    _timePoints = List();
+    _temperatePoints = List();
 
-  void _initLinePoints(Size size) {
-    linePoints = List();
-    timePoints = List();
     for (int i = 0; i < _data.length; i++) {
       final element = _data[i];
       final index = i;
+      // 温度点坐标
+      double temperateX = startEndPadding + _timeGap * index.toDouble();
+      double temperateY = size.height -
+          topBottomPadding -
+          (element.temperate - minTemperate) * _temperateGap;
       Offset linePoint = Offset(
-        (startEndPadding + _timeGap * index) * 1.0,
-        (topBottomPadding * 1.0 +
-            (element.temperate - minTemperate) * _temperateGap),
+        temperateX,
+        temperateY,
       );
+      _linePoints.add(linePoint);
+
+      // 时间文本坐标
+      ui.Paragraph timeText = _buildText(
+        element.time,
+        _timeGap,
+      );
+      final double timeX = temperateX - timeText.width / 2;
+      final double timeY = size.height - topBottomPadding / 2;
       Offset timePoint = Offset(
-        (startEndPadding + _timeGap * index) * 1.0,
-        size.height - topBottomPadding * 1.0,
+        timeX,
+        timeY,
       );
-      linePoints.add(linePoint);
-      timePoints.add(timePoint);
+      _timePoints.add(TextWithPoint(timeText, timePoint));
+
+      // 温度文本坐标
+      ui.Paragraph temperateText = _buildText(
+        "${element.temperate}℃",
+        _timeGap,
+      );
+      final double temperateTextX = temperateX - temperateText.width / 2;
+      final double temperateTextY = temperateY - topBottomPadding * 2 / 3;
+      Offset temperateTextOffset = Offset(
+        temperateTextX,
+        temperateTextY,
+      );
+      _temperatePoints.add(TextWithPoint(temperateText, temperateTextOffset));
     }
   }
 
-  Paragraph _buildText(String text, double itemWidth) {
-    var pb = ParagraphBuilder(ParagraphStyle(
+  ui.Paragraph _buildText(String text, double itemWidth,
+      {double fontSize = 12.0}) {
+    var pb = ui.ParagraphBuilder(ui.ParagraphStyle(
       textAlign: TextAlign.center, //居中
-      fontSize: 12.0, //大小
+      fontSize: fontSize, //大小
     ));
     pb.addText(text);
-    return pb.build()..layout(ParagraphConstraints(width: itemWidth));
+    return pb.build()..layout(ui.ParagraphConstraints(width: itemWidth));
   }
 }
 
-class MockHourData {
+class TextWithPoint {
+  final ui.Paragraph _text;
+  final Offset _point;
+
+  TextWithPoint(this._text, this._point);
+
+  @override
+  String toString() {
+    return 'TextWithPoint{_text: $_text, _point: $_point}';
+  }
+}
+
+class HourData {
   static const WEATHER_1 = "1";
   static const WEATHER_2 = "2";
   static const WEATHER_3 = "3";
   static const WEATHER_4 = "4";
 
-  MockHourData(int hour, this.temperate, this.weather) {
+  HourData(int hour, this.temperate, this.weather) {
     this.time = _time(hour);
   }
 

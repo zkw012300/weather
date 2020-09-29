@@ -2,32 +2,32 @@ import 'dart:math';
 
 import 'package:weather/view/widget/hours_line_chart.dart';
 
-List<MockHourData> mockHoursData() {
-  final List<MockHourData> mockData = List();
+List<HourData> mockHoursData({int size = 24}) {
+  final List<HourData> mockData = List();
   final random = Random();
   final downGap = 20 + random.nextInt(5);
   final upGap = 30 + random.nextInt(5);
   final weatherList = [
-    MockHourData.WEATHER_1,
-    MockHourData.WEATHER_2,
-    MockHourData.WEATHER_3,
-    MockHourData.WEATHER_4
+    HourData.WEATHER_1,
+    HourData.WEATHER_2,
+    HourData.WEATHER_3,
+    HourData.WEATHER_4
   ];
-  int next = random.nextInt(24);
+  int next = random.nextInt(size);
   String currentWeather = weatherList[random.nextInt(weatherList.length)];
-  for (int i = 1; i <= 24; i++) {
+  for (int i = 1; i <= size; i++) {
     if (i >= next) {
-      if (next >= 20) {
-        next = 24;
+      if (next >= size * 5 / 6) {
+        next = size;
       } else {
         next = next + random.nextInt(24 - next);
       }
       currentWeather = weatherList[random.nextInt(weatherList.length)];
     }
-    final time = i;
+    final time = i % 24;
     final temperate = random.nextInt(upGap - downGap) + downGap;
     final weather = currentWeather;
-    mockData.add(MockHourData(time, temperate, weather));
+    mockData.add(HourData(time, temperate, weather));
   }
   return mockData;
 }
