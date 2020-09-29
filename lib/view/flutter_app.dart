@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:weather/utils/screen_utils.dart';
 import 'package:weather/view/weathers/snow_widget.dart';
+import 'package:weather/view/widget/blur_rect.dart';
 import 'package:weather/view/widget/hours_line_chart.dart';
 
 class FlutterApp extends StatelessWidget {
@@ -43,7 +44,9 @@ class _HomePageState extends State<_HomePage> {
   }
 
   Widget _scrollView() {
-    final List<Widget> _widgets = [HoursLineChart()];
+    final List<Widget> _widgets = [
+      BlurRectWidget.wrap(child: HoursLineChart()),
+    ];
     final _scrollerController = ScrollController();
     _scrollerController.addListener(() {});
     return CustomScrollView(

@@ -6,7 +6,6 @@ import 'package:weather/model/text_with_point.dart';
 import 'package:weather/utils/log_utils.dart';
 import 'package:weather/utils/mock_utils.dart';
 import 'package:weather/utils/screen_utils.dart';
-import 'package:weather/view/widget/blur_rect.dart';
 
 const _TAG = "HoursLineChart";
 
@@ -32,12 +31,7 @@ class _HourLineChartState extends State<HoursLineChart> {
     if (_data.isEmpty) {
       widget = Container(width: 0, height: 0,);
     } else {
-      widget = Container(
-        padding: EdgeInsets.all(24),
-        child: BlurRectWidget(
-          child: _scrollablePainter(),
-        ),
-      );
+      widget = _scrollablePainter();
     }
     return widget;
   }

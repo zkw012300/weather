@@ -8,6 +8,16 @@ class BlurRectWidget extends StatefulWidget {
   final BorderRadius borderRadius;
   final Color color;
 
+  static Widget wrap({@required Widget child, BorderRadius borderRadius}) {
+    return Container(
+      padding: EdgeInsets.all(24),
+      child: BlurRectWidget(
+        child: child,
+        borderRadius: borderRadius,
+      ),
+    );
+  }
+
   const BlurRectWidget({
     Key key,
     this.child,
@@ -37,7 +47,8 @@ class _BlurRectWidgetState extends State<BlurRectWidget> {
                 sigmaY: this.widget.sigmaY != null ? this.widget.sigmaY : 5,
               ),
               child: Container(
-                color: this.widget.color == null ? Colors.black12 : this.widget.color,
+                color: this.widget.color == null ? Colors.black12 : this.widget
+                    .color,
                 child: this.widget.child,
               ),
             ),
