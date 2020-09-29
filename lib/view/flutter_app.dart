@@ -5,6 +5,7 @@ import 'package:weather/utils/screen_utils.dart';
 import 'package:weather/view/weathers/snow_widget.dart';
 import 'package:weather/view/widget/blur_rect.dart';
 import 'package:weather/view/widget/hours_line_chart.dart';
+import 'package:weather/view/widget/sun_rise_set_widget.dart';
 
 class FlutterApp extends StatelessWidget {
   @override
@@ -45,7 +46,9 @@ class _HomePageState extends State<_HomePage> {
 
   Widget _scrollView() {
     final List<Widget> _widgets = [
+      Container(height: ScreenUtils.setHeight(800),),
       BlurRectWidget.wrap(child: HoursLineChart()),
+      BlurRectWidget.wrap(child: SunRiseSetWidget()),
     ];
     final _scrollerController = ScrollController();
     _scrollerController.addListener(() {});

@@ -10,7 +10,7 @@ class BlurRectWidget extends StatefulWidget {
 
   static Widget wrap({@required Widget child, BorderRadius borderRadius}) {
     return Container(
-      padding: EdgeInsets.all(24),
+      padding: EdgeInsets.all(16),
       child: BlurRectWidget(
         child: child,
         borderRadius: borderRadius,

@@ -21,7 +21,7 @@ List<HourData> mockHoursData({int size = 24}) {
       if (next >= size * 5 / 6) {
         next = size;
       } else {
-        next = next + random.nextInt(24 - next);
+        next = next + random.nextInt(size - next);
       }
       currentWeather = weatherList[random.nextInt(weatherList.length)];
     }
